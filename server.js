@@ -14,7 +14,7 @@ const fs = require('fs');
 app.use(express.static('public')); // Define a pasta 'public' como estática
 
 app.get('/', (req, res) => {
-    res.redirect('/public/login.html'); // Ajuste o caminho se login.html estiver em uma pasta
+    res.redirect('/login.html'); // Ajuste o caminho se login.html estiver em uma pasta
 });
 
 require('dotenv').config();
