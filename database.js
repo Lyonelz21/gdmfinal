@@ -2,10 +2,10 @@ const sql = require('mssql');
 
 // Configuração do banco de dados para Azure SQL
 const config = {
-    user: process.DB_USER || '',
-    password: process.DB_PASSWORD || '',
-    server: process.DB_SERVER || '', // Força o valor diretamente para teste
-    database: process.DB_DATABASE || '',
+    user: process.env.DB_USER || '',
+    password: process.env.DB_PASSWORD || '',
+    server: process.env.DB_SERVER || '', // Força o valor diretamente para teste
+    database: process.env.DB_DATABASE || '',
     options: {
         encrypt: true,
         trustServerCertificate: false
