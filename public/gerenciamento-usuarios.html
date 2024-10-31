@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Usuários</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="verificarAcesso()">
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <h3 id="welcome">Bem-vindo, Usuário</h3>
+        <nav class="menu">
+            <a href="cadastro-material.html">Cadastrar GDM</a>
+            <a href="lista-gdm.html">Listar GDMs</a>
+            <a href="atualiza-status.html">Atualização GDM</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="criar-usuario.html">Criar Usuário</a>
+            <a href="gerenciamento-usuarios.html">Gerenciamento de Usuários</a>
+            <a href="logout.html" class="logout-button">Logout</a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <h1>Gerenciamento de Usuários</h1>
+        <div id="message" class="message"></div>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome de Usuário</th>
+                    <th>Nome Completo</th>
+                    <th>Telefone</th>
+                    <th>Email</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="userList"></tbody>
+        </table>
+
+        <!-- Modal para alterar senha -->
+        <div id="passwordModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('passwordModal')">&times;</span>
+                <h2>Alterar Senha</h2>
+                <form id="changePasswordForm">
+                    <input type="hidden" id="userIdPassword">
+                    <label for="newPassword">Nova Senha:</label>
+                    <input type="password" id="newPassword" required>
+                    <button type="button" onclick="changePassword()">Salvar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para editar usuário -->
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('editModal')">&times;</span>
+                <h2>Editar Usuário</h2>
+                <form id="editUserForm">
+                    <input type="hidden" id="userIdEdit">
+                    <label for="editName">Nome Completo:</label>
+                    <input type="text" id="editName" required>
+                    <label for="editPhone">Telefone:</label>
+                    <input type="text" id="editPhone">
+                    <label for="editEmail">Email:</label>
+                    <input type="email" id="editEmail">
+                    <button type="button" onclick="editUser()">Salvar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para Confirmar Exclusão -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
+                <h2>Confirmar Exclusão</h2>
+                <p>Tem certeza que deseja excluir este usuário?</p>
+                <button type="button" onclick="confirmDelete()">Sim, excluir</button>
+                <button type="button" onclick="closeModal('deleteModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function verificarAcesso() {
+            try {
+                const response = await fetch('/api/user-info');
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const user = await response.json();
+                if (user.role !== 'admin') {
+                    alert('Acesso negado: apenas administradores podem acessar esta página.');
+                    window.location.href = '/login.html';
+                }
+            } catch (error) {
+                console.error('Erro ao verificar o acesso:', error);
+                window.location.href = '/login.html';
+            }
+        }
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';
+
+                users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.name}</td>
+                        <td>${user.phone}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <button onclick="openEditModal(${user.id}, '${user.name}', '${user.phone}', '${user.email}')">Editar</button>
+                            <button onclick="openPasswordModal(${user.id})">Alterar Senha</button>
+                            <button onclick="openDeleteModal(${user.id})">Excluir</button>
+                        </td>
+                    `;
+                    userList.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Erro ao buscar usuários:', error);
+            }
+        }
+
+        function openPasswordModal(userId) {
+            document.getElementById('userIdPassword').value = userId;
+            document.getElementById('passwordModal').style.display = 'block';
+        }
+
+        function openEditModal(userId, name, phone, email) {
+            document.getElementById('userIdEdit').value = userId;
+            document.getElementById('editName').value = name;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function openDeleteModal(userId) {
+            document.getElementById('userIdDelete').value = userId;
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.getElementById('changePasswordForm').reset();
+            document.getElementById('editUserForm').reset();
+        }
+
+        async function changePassword() {
+            const userId = document.getElementById('userIdPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+
+            try {
+                const response = await fetch(`/api/users/${userId}/change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: newPassword })
+                });
+
+                if (response.ok) {
+                    document.getElementById('message').className = 'success';
+                    document.getElementById('message').innerText = 'Senha alterada com sucesso!';
+                } else {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = 'Erro ao alterar senha.';
+                }
+
+                closeModal('passwordModal');
+                fetchUsers();
+            } catch (error) {
+                console.error('Erro ao alterar senha:', error);
+            }
+        }
+
+        async function editUser() {
+            const userId = document.getElementById('userIdEdit').value;
+            const name = document.getElementById('editName').value;
+            const phone = document.getElementById('editPhone').value;
+            const email = document.getElementById('editEmail').value;
+
+            try {
+                const response = await fetch(`/api/users/${userId}/edit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, email })
+                });
+
+                if (response.ok) {
+                    document.getElementById('message').className = 'success';
+                    document.getElementById('message').innerText = 'Usuário atualizado com sucesso!';
+                    fetchUsers();
+                } else {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = 'Erro ao atualizar usuário.';
+                }
+
+                closeModal('editModal');
+            } catch (error) {
+                console.error('Erro ao editar usuário:', error);
+            }
+        }
+
+        async function confirmDelete() {
+            const userId = document.getElementById('userIdDelete').value;
+            await deleteUser(userId);
+            closeModal('deleteModal');
+        }
+
+        async function deleteUser(userId) {
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    document.getElementById('message').className = 'success';
+                    document.getElementById('message').innerText = 'Usuário excluído com sucesso!';
+                    fetchUsers();
+                } else {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = 'Erro ao excluir usuário.';
+                }
+            } catch (error) {
+                console.error('Erro ao excluir usuário:', error);
+            }
+        }
+
+        fetchUsers();
+    </script>
+</body>
+</html>

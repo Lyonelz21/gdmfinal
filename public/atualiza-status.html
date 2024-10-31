@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualização de Status de GDM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<script>
+    async function configurarMenu() {
+        try {
+            const response = await fetch('/api/user-info');
+            const user = await response.json();
+
+            // Esconde ou mostra os links com base na role do usuário
+            if (user.role !== 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+            if (user.role !== 'admin' && user.role !== 'terra') {
+                document.querySelectorAll('.terra-admin-only').forEach(el => el.style.display = 'none');
+            }
+
+            // Exibe o nome do usuário no menu (caso aplicável)
+            if (document.getElementById('welcome')) {
+                document.getElementById('welcome').innerText = `Bem-vindo, ${user.name.charAt(0).toUpperCase() + user.name.slice(1)}`;
+            }
+        } catch (error) {
+            console.error('Erro ao configurar o menu:', error);
+            window.location.href = '/login.html'; // Redireciona para o login em caso de erro
+        }
+    }
+
+    // Executa a função de configuração ao carregar a página
+    configurarMenu();
+</script>
+
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <p id="welcome">Bem-vindo, Usuário</p>
+        <a href="/logout" class="logout-button">Logout</a>
+<nav class="menu">
+    <a href="cadastro-material.html">Cadastrar GDM</a>
+    <a href="lista-gdm.html">Listar GDMs</a>
+    <a href="atualiza-status.html">Atualização GDM</a>
+    <a href="dashboard.html" class="terra-admin-only">Dashboard</a>
+    <a href="criar-usuario.html" class="admin-only">Criar Usuário</a>
+    <a href="gerenciamento-usuarios.html" class="admin-only">Gerenciamento de Usuários</a>
+
+</nav>
+    </div>
+
+    <div class="main-content">
+        <h1>Atualização de Status de GDM</h1>
+        <div class="form-container">
+            <div class="form-group">
+                <label for="gdmSelect">Selecione uma GDM</label>
+                <select id="gdmSelect" required>
+                    <option value="">Escolha uma GDM</option>
+                    <!-- Opções de GDM serão preenchidas dinamicamente -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="motivoAtualizacao">Motivo para Atualização</label>
+                <select id="motivoAtualizacao" required>
+                    <option value="semRetorno">Material sem Retorno</option>
+                    <option value="descartado">Descartado</option>
+                    <option value="retornado">Material Retornado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="dataRetorno">Data de Retorno</label>
+                <input type="date" id="dataRetorno">
+            </div>
+
+            <button class="submit-button" onclick="atualizarStatus()">Atualizar Status</button>
+
+            <p id="message" class="message"></p>
+        </div>
+    </div>
+
+<script>
+async function carregarGDMsPendentes() {
+    try {
+        const response = await fetch('/api/gdms-pendentes');
+        if (response.ok) {
+            const gdms = await response.json();
+            const gdmSelect = document.getElementById('gdmSelect');
+            gdmSelect.innerHTML = '<option value="">Escolha uma GDM</option>';
+
+            gdms.forEach(gdm => {
+                const option = document.createElement('option');
+                option.value = gdm.numero_gdm;
+                option.textContent = `${gdm.numero_gdm} - ${gdm.embarcacao.charAt(0).toUpperCase() + gdm.embarcacao.slice(1)}`;
+                gdmSelect.appendChild(option);
+            });
+        } else {
+            console.error('Erro ao carregar GDMs pendentes:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar GDMs pendentes:', error);
+    }
+}
+
+carregarGDMsPendentes();
+</script>
+
+    <script>
+        async function atualizarStatus() {
+            const gdmNumero = document.getElementById('gdmSelect').value;
+            const motivo = document.getElementById('motivoAtualizacao').value;
+            const dataRetorno = document.getElementById('dataRetorno').value;
+
+            if (!gdmNumero || !motivo || (motivo === 'retornado' && !dataRetorno)) {
+                document.getElementById('message').className = 'error';
+                document.getElementById('message').innerText = 'Preencha todos os campos obrigatórios.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/atualizar-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ gdmNumero, motivo, dataRetorno })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('message').className = 'success';
+                    document.getElementById('message').innerText = result.message;
+                    document.querySelector(`#gdmSelect option[value="${gdmNumero}"]`).remove();
+                } else {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = result.error;
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar status:', error);
+                document.getElementById('message').className = 'error';
+                document.getElementById('message').innerText = 'Erro ao atualizar status.';
+            }
+        }
+        </script>
+
+
+
+</body>
+</html>

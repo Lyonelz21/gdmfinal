@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Usuário</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onload="verificarAcesso()">
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <h3 id="welcome">Bem-vindo, Usuário</h3>
+        <nav class="menu">
+            <a href="cadastro-material.html">Cadastrar GDM</a>
+            <a href="lista-gdm.html">Listar GDMs</a>
+            <a href="atualiza-status.html">Atualização GDM</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="criar-usuario.html">Criar Usuário</a>
+            <a href="gerenciamento-usuarios.html">Gerenciamento de Usuários</a>
+            <a href="logout.html" class="logout-button">Logout</a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <h1>Criar Usuário</h1>
+        <div class="form-container">
+            <form id="userForm" onsubmit="criarUsuario(event)">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select id="role" required>
+                        <option value="admin">Admin</option>
+                        <option value="terra">Terra</option>
+                        <option value="embarcacao">Embarcação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="name">Nome Completo:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Telefone:</label>
+                    <input type="text" id="phone">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email">
+                </div>
+                <button type="submit" class="submit-button">Criar Usuário</button>
+                <div id="message" class="message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function criarUsuario(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+
+            try {
+                const response = await fetch('/create-user', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, role, name, phone, email })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro do servidor: ${errorText}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('message').className = 'success';
+                document.getElementById('message').innerText = result.message;
+            } catch (error) {
+                console.error('Erro ao criar usuário no cliente:', error);
+                document.getElementById('message').className = 'error';
+                document.getElementById('message').innerText = `Erro no servidor ao criar usuário: ${error.message}`;
+            }
+        }
+
+        async function verificarAcesso() {
+            try {
+                const response = await fetch('/api/user-info');
+                if (!response.ok) {
+                    window.location.href = '/login.html'; // Redireciona se não for autorizado
+                    return;
+                }
+
+                const user = await response.json();
+                if (user.role !== 'admin') {
+                    alert('Acesso negado: apenas administradores podem acessar esta página.');
+                    window.location.href = '/login.html'; // Redireciona se o role não for admin
+                }
+            } catch (error) {
+                console.error('Erro ao verificar o acesso:', error);
+                window.location.href = '/login.html'; // Redireciona em caso de erro
+            }
+        }
+    </script>
+</body>
+</html>

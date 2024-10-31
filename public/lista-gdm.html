@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de GDMs</title>
+    <link rel="stylesheet" href="style.css">
+</head><script>
+    async function configurarMenu() {
+        try {
+            const response = await fetch('/api/user-info');
+            const user = await response.json();
+
+            // Esconde ou mostra os links com base na role do usuário
+            if (user.role !== 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+            if (user.role !== 'admin' && user.role !== 'terra') {
+                document.querySelectorAll('.terra-admin-only').forEach(el => el.style.display = 'none');
+            }
+
+            // Exibe o nome do usuário no menu (caso aplicável)
+            if (document.getElementById('welcome')) {
+                document.getElementById('welcome').innerText = `Bem-vindo, ${user.name.charAt(0).toUpperCase() + user.name.slice(1)}`;
+
+            }
+
+        } catch (error) {
+            console.error('Erro ao configurar o menu:', error);
+            window.location.href = '/login.html'; // Redireciona para o login em caso de erro
+        }
+    }
+
+    // Executa a função de configuração ao carregar a página
+    configurarMenu();
+</script>
+
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <p id="welcome">Bem-vindo, Usuário</p>
+        <a href="/logout" class="logout-button">Logout</a>
+<nav class="menu">
+    <a href="cadastro-material.html">Cadastrar GDM</a>
+    <a href="lista-gdm.html">Listar GDMs</a>
+    <a href="atualiza-status.html">Atualização GDM</a>
+    <a href="dashboard.html" class="terra-admin-only">Dashboard</a>
+    <a href="criar-usuario.html" class="admin-only">Criar Usuário</a>
+    <a href="gerenciamento-usuarios.html" class="admin-only">Gerenciamento de Usuários</a>
+    </nav>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="main-content">
+        <h1>Lista de GDMs</h1>
+
+        <!-- Filtro de Embarcação para Admin/Terra -->
+        <div id="filterContainer" style="display: none;">
+            <label for="embarcacaoFilter">Filtrar por Embarcação:</label>
+            <select id="embarcacaoFilter" onchange="fetchGDMList()">
+                <option value="">Todas</option>
+                <!-- Opções serão preenchidas dinamicamente -->
+            </select>
+        </div>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Numeração GDM</th>
+                    <th>Embarcação</th>
+                    <th>Motivo do Desembarque</th>
+                    <th>Destino</th>
+                    <th>Data de Envio</th>
+                    <th>Data de Retorno</th>
+                    <th>Status</th>
+                    <th>Detalhes</th>
+                </tr>
+            </thead>
+            <tbody id="gdmTableBody">
+                <!-- As linhas de dados serão inseridas aqui dinamicamente -->
+            </tbody>
+        </table>
+        <p id="message" class="message"></p>
+    </div>
+
+<script>
+    async function fetchGDMList() {
+        const filter = document.getElementById('embarcacaoFilter');
+        const selectedEmbarcacao = filter ? filter.value : '';
+
+        try {
+            const response = await fetch(`/api/lista-gdm?embarcacao=${selectedEmbarcacao}`);
+            if (response.ok) {
+                const gdms = await response.json();
+                const tableBody = document.getElementById('gdmTableBody');
+                tableBody.innerHTML = '';
+
+                gdms.forEach(gdm => {
+                    const row = document.createElement('tr');
+                    const embarcacao = gdm.embarcacao ? gdm.embarcacao.charAt(0).toUpperCase() + gdm.embarcacao.slice(1) : 'Desconhecido';
+                    row.innerHTML = `
+                        <td>${gdm.numero_gdm}</td>
+                        <td>${embarcacao}</td>
+                        <td>${gdm.motivo_desembarque}</td>
+                        <td>${gdm.destino}</td>
+                        <td>${new Date(gdm.data_envio).toLocaleDateString()}</td>
+                        <td>${gdm.data_retorno ? new Date(gdm.data_retorno).toLocaleDateString() : 'Não retornado'}</td>
+                        <td>${gdm.status_motivo || 'Desembarcado'}</td>
+                        <td><button onclick="verDetalhes(${gdm.id})">Ver Detalhes</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                document.getElementById('message').className = 'error';
+                document.getElementById('message').innerText = 'Erro ao carregar a lista de GDMs';
+            }
+        } catch (error) {
+            console.error('Erro ao buscar lista de GDMs:', error);
+            document.getElementById('message').className = 'error';
+            document.getElementById('message').innerText = 'Erro ao buscar a lista de GDMs';
+        }
+    }
+
+    // Função para inicializar o filtro de embarcação para Admin/Terra
+    async function initializeFilter() {
+        try {
+            const response = await fetch('/api/embarcacoes');
+            if (response.ok) {
+                const embarcacoes = await response.json();
+                const filter = document.getElementById('embarcacaoFilter');
+                embarcacoes.forEach(emb => {
+                    const option = document.createElement('option');
+                    option.value = emb.unit_id;
+                    option.text = emb.username.charAt(0).toUpperCase() + emb.username.slice(1);
+                    filter.appendChild(option);
+                });
+                document.getElementById('filterContainer').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Erro ao carregar o filtro de embarcação:', error);
+        }
+    }
+
+    async function verificarRole() {
+        try {
+            const response = await fetch('/api/user-info');
+            const user = await response.json();
+            if (user.role === 'admin' || user.role === 'terra') {
+                initializeFilter();
+            }
+        } catch (error) {
+            console.error('Erro ao verificar a role do usuário:', error);
+        }
+    }
+
+function verDetalhes(gdmId) {
+    // Verifica se o ID está definido
+    if (gdmId) {
+        window.location.href = `/detalhe-gdm.html?id=${gdmId}`;
+    } else {
+        console.error("ID da GDM não definido.");
+    }
+}
+
+    verificarRole();
+    fetchGDMList();
+</script>
+</body>
+</html>

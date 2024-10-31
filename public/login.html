@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Controle GDM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <img src="logo.png" alt="Logo" class="logo-login">
+        <h1>Sistema Controle GDM</h1>
+        <form id="loginForm" onsubmit="login(event)">
+            <label for="username">Usuário</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Senha</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        async function login(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    window.location.href = '/cadastro-material.html';
+                } else if (response.status === 401) {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = 'Usuário ou senha incorretos';
+                } else {
+                    document.getElementById('message').className = 'error';
+                    document.getElementById('message').innerText = 'Erro no servidor. Tente novamente mais tarde.';
+                }
+            } catch (error) {
+                console.error('Erro na requisição de login:', error);
+                document.getElementById('message').className = 'error';
+                document.getElementById('message').innerText = 'Erro de conexão com o servidor';
+            }
+        }
+    </script>
+</body>
+</html>

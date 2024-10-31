@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<script>
+    async function configurarMenu() {
+        try {
+            const response = await fetch('/api/user-info');
+            const user = await response.json();
+
+            if (user.role !== 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            }
+            if (user.role !== 'admin' && user.role !== 'terra') {
+                document.querySelectorAll('.terra-admin-only').forEach(el => el.style.display = 'none');
+            }
+
+            if (document.getElementById('welcome')) {
+                document.getElementById('welcome').innerText = `Bem-vindo, ${user.name.charAt(0).toUpperCase() + user.name.slice(1)}`;
+            }
+        } catch (error) {
+            console.error('Erro ao configurar o menu:', error);
+            window.location.href = '/login.html';
+        }
+    }
+
+    configurarMenu();
+</script>
+
+<body onload="loadDashboard()">
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <p id="welcome">Bem-vindo, Usuário</p>
+        <a href="/logout" class="logout-button">Logout</a>
+        <nav class="menu">
+            <a href="cadastro-material.html">Cadastrar GDM</a>
+            <a href="lista-gdm.html">Listar GDMs</a>
+            <a href="atualiza-status.html">Atualização GDM</a>
+            <a href="dashboard.html" class="terra-admin-only">Dashboard</a>
+            <a href="criar-usuario.html" class="admin-only">Criar Usuário</a>
+            <a href="gerenciamento-usuarios.html" class="admin-only">Gerenciamento de Usuários</a>
+        </nav>
+    </div>
+    <div class="main-content">
+        <h1>Dashboard</h1>
+
+        <!-- Métricas de Tempo Médio -->
+        <div class="metric-bar green">
+            <span id="tempoMedioRetorno">Tempo Médio de Retorno: Carregando...</span>
+        </div>
+        <div class="metric-bar yellow">
+            <span id="tempoMedioAberto">Tempo Médio de GDM em Aberto: Carregando...</span>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="chart-container">
+            <canvas id="gdmPorEmbarcacao"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="gdmPorMes"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="materiaisDesembarcados"></canvas>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            const metricsResponse = await fetch('/dashboard-metrics');
+            const metrics = await metricsResponse.json();
+            document.getElementById("tempoMedioRetorno").textContent = `Tempo Médio de Retorno: ${metrics.tempoMedioRetorno || 0} dias`;
+            document.getElementById("tempoMedioAberto").textContent = `Tempo Médio de GDM em Aberto: ${metrics.tempoMedioAberto || 0} dias`;
+
+            const gdmPorEmbarcacaoData = await fetch('/gdm-por-embarcacao').then(res => res.json());
+            const gdmPorMesData = await fetch('/gdm-por-mes').then(res => res.json());
+            const materiaisDesembarcadosData = await fetch('/materiais-desembarcados').then(res => res.json());
+
+            new Chart(document.getElementById("gdmPorEmbarcacao"), {
+                type: "bar",
+                data: {
+                    labels: gdmPorEmbarcacaoData.embarcacoes,
+                    datasets: [{
+                        label: "GDMs Criadas",
+                        data: gdmPorEmbarcacaoData.quantidades,
+                    }]
+                }
+            });
+
+            new Chart(document.getElementById("gdmPorMes"), {
+                type: "line",
+                data: {
+                    labels: gdmPorMesData.meses,
+                    datasets: [{
+                        label: "GDMs Criadas",
+                        data: gdmPorMesData.quantidades,
+                    }]
+                }
+            });
+
+            new Chart(document.getElementById("materiaisDesembarcados"), {
+                type: "pie",
+                data: {
+                    labels: materiaisDesembarcadosData.tipos,
+                    datasets: [{
+                        data: materiaisDesembarcadosData.quantidades,
+                    }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>

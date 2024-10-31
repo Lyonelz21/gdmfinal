@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualização de Status de GDM</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="logo.png" alt="Logo" class="logo">
+        </div>
+        <p id="welcome">Bem-vindo, Usuário</p>
+        <a href="/logout" class="logout-button">Logout</a>
+        <nav class="menu">
+            <a href="cadastro-material.html">Cadastrar GDM</a>
+            <a href="lista-gdm.html">Listar GDMs</a>
+            <a href="atualizacao-status.html">Atualização GDM</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="criar-usuario.html">Criar Usuário</a>
+            <a href="gerenciamento-usuarios.html">Gerenciamento de Usuários</a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <h1>Atualização de Status de GDM</h1>
+        <div class="form-container">
+            <div class="form-group">
+                <label for="gdmSelect">Selecione uma GDM</label>
+                <select id="gdmSelect" required>
+                    <option value="">Escolha uma GDM</option>
+                    <!-- Opções de GDM serão preenchidas dinamicamente -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="motivoAtualizacao">Motivo para Atualização</label>
+                <select id="motivoAtualizacao" required>
+                    <option value="semRetorno">Material sem Retorno</option>
+                    <option value="descartado">Descartado</option>
+                    <option value="retornado">Material Retornado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="dataRetorno">Data de Retorno</label>
+                <input type="date" id="dataRetorno">
+            </div>
+
+            <button class="submit-button" onclick="atualizarStatus()">Atualizar Status</button>
+
+            <p id="message" class="message"></p>
+        </div>
+    </div>
+
+<script>
+async function carregarGDMsPendentes() {
+    try {
+        const response = await fetch('/api/gdms-pendentes');
+        if (response.ok) {
+            const gdms = await response.json();
+            const gdmSelect = document.getElementById('gdmSelect');
+            gdmSelect.innerHTML = '<option value="">Escolha uma GDM</option>';
+
+            gdms.forEach(gdm => {
+                const option = document.createElement('option');
+                option.value = gdm.numero_gdm;
+                option.textContent = `${gdm.numero_gdm} - ${gdm.embarcacao.charAt(0).toUpperCase() + gdm.embarcacao.slice(1)}`;
+                gdmSelect.appendChild(option);
+            });
+        } else {
+            console.error('Erro ao carregar GDMs pendentes:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Erro ao carregar GDMs pendentes:', error);
+    }
+}
+
+carregarGDMsPendentes();
+</script>
+</body>
+</html>
