@@ -11,6 +11,10 @@ const PORT = process.env.PORT || 3000;
 const saltRounds = 10;
 const fs = require('fs');
 
+app.get('/', (req, res) => {
+    res.redirect('/login.html');
+});
+
 require('dotenv').config();
 console.log("Servidor:", process.env.DB_SERVER); // Deve mostrar "seuservidor.database.windows.net" ou o valor correto
 
