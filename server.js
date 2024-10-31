@@ -698,4 +698,4 @@ app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da GDM' });
     }
 });
-app.listen(3000, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
