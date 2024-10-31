@@ -12,7 +12,7 @@ const saltRounds = 10;
 const fs = require('fs');
 
 app.get('/', (req, res) => {
-    res.redirect('/login.html');
+    res.redirect('/public/login.html'); // Ajuste o caminho se login.html estiver em uma pasta
 });
 
 require('dotenv').config();
