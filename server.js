@@ -11,6 +11,8 @@ const PORT = process.env.PORT || 3000;
 const saltRounds = 10;
 const fs = require('fs');
 
+app.use(express.static('public')); // Define a pasta 'public' como estática
+
 app.get('/', (req, res) => {
     res.redirect('/public/login.html'); // Ajuste o caminho se login.html estiver em uma pasta
 });
