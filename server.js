@@ -671,25 +671,56 @@ app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
 app.use('/api/gdms-pendentes', isAuthenticated);
 
 // Rota para listar GDMs pendentes de atualização de status (sem data de retorno)
-app.get('/api/gdms-pendentes', async (req, res) => {
+app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
+    const gdmId = parseInt(req.params.id, 10); // Garante que é um número inteiro
+
+    if (isNaN(gdmId)) {
+        return res.status(400).json({ error: 'ID inválido para GDM' });
+    }
+
     try {
         const pool = await connect();
-        
-        // Consultando apenas as GDMs do usuário logado usando unit_id
         const result = await pool.request()
-            .input('unitId', sql.Int, req.session.user.unit_id)  // Usa o unit_id do usuário logado
+            .input('id', sql.Int, gdmId)
             .query(`
-                SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
+                SELECT 
+                    g.numero_gdm, 
+                    u.username AS unidade, -- Pega o nome do usuário (embarcação) associado ao unit_id
+                    g.motivo_desembarque, 
+                    g.destino,
+                    g.observacao, 
+                    g.data_envio, 
+                    g.data_retorno, 
+                    g.gdm_file, 
+                    g.status_motivo
                 FROM gdms g
-                JOIN users u ON g.unit_id = u.unit_id
-                WHERE g.data_retorno IS NULL AND g.unit_id = @unitId
+                LEFT JOIN users u ON g.unit_id = u.unit_id -- Verifica se o unit_id da GDM é igual ao unit_id da users
+                WHERE g.id = @id;
             `);
 
-        console.log("Resultado da consulta para o unit_id:", req.session.user.unit_id, result.recordset);
-        res.json(result.recordset);
+        // Verifica se algum resultado foi encontrado
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ error: 'GDM não encontrada' });
+        }
+
+        // Formata a resposta com os dados da GDM
+        const gdmDetails = {
+            numero_gdm: result.recordset[0].numero_gdm,
+            unidade: result.recordset[0].unidade || 'Unidade desconhecida', // Exibe unidade ou valor padrão se estiver undefined
+            motivo_desembarque: result.recordset[0].motivo_desembarque,
+            destino: result.recordset[0].destino,
+            observacao: result.recordset[0].observacao || 'Nenhuma observação',
+            data_envio: result.recordset[0].data_envio,
+            data_retorno: result.recordset[0].data_retorno || 'Não retornado',
+            gdm_file: result.recordset[0].gdm_file,
+            status_motivo: result.recordset[0].status_motivo || 'Sem status'
+        };
+
+        // Envia os detalhes da GDM
+        res.json(gdmDetails);
     } catch (error) {
-        console.error('Erro ao buscar GDMs pendentes:', error);
-        res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
+        console.error('Erro ao buscar detalhes da GDM:', error);
+        res.status(500).json({ error: 'Erro ao buscar detalhes da GDM' });
     }
 });
 
