@@ -540,21 +540,6 @@ app.get('/api/lista-gdm', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/api/gdms-pendentes', async (req, res) => {
-    try {
-        const result = await pool.request().query(`
-            SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
-            FROM gdms g
-            JOIN users u ON g.unit_id = u.unit_id
-            WHERE g.data_retorno IS NULL
-        `);
-        console.log(result.recordset); // Para confirmar o retorno
-        res.json(result.recordset);
-    } catch (error) {
-        console.error('Erro ao buscar GDMs pendentes:', error);
-        res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
-    }
-});
 
 // Função para calcular o tempo médio de retorno e o tempo médio de GDMs em aberto
 async function calcularMetricasDashboard() {
