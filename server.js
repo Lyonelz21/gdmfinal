@@ -671,19 +671,22 @@ app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
 app.use('/api/gdms-pendentes', isAuthenticated);
 
 // Rota para listar GDMs pendentes de atualização de status (sem data de retorno)
-app.get('/api/gdms-pendentes', isAuthenticated, async (req, res) => {
+app.get('/api/gdms-pendentes', async (req, res) => {
     try {
         const pool = await connect();
+        
+        // Consultando apenas as GDMs do usuário logado usando unit_id
         const result = await pool.request()
-            .input('userId', sql.Int, req.session.user.id) // Filtra com base no id do usuário logado
+            .input('unitId', sql.Int, req.session.user.unit_id)  // Usa o unit_id do usuário logado
             .query(`
                 SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
                 FROM gdms g
                 JOIN users u ON g.unit_id = u.unit_id
-                WHERE g.data_retorno IS NULL AND g.created_by = @userId
+                WHERE g.data_retorno IS NULL AND g.unit_id = @unitId
             `);
 
-        res.json(result.recordset); // Retorna apenas GDMs do usuário
+        console.log("Resultado da consulta para o unit_id:", req.session.user.unit_id, result.recordset);
+        res.json(result.recordset);
     } catch (error) {
         console.error('Erro ao buscar GDMs pendentes:', error);
         res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
