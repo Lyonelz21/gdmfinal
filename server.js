@@ -338,24 +338,6 @@ app.get('/dashboard-metrics', isAuthenticated, async (req, res) => {
     }
 });
 
-// Rota para listar GDMs pendentes de atualização de status (sem data de retorno)
-app.get('/gdm-pendentes', isAuthenticated, async (req, res) => {
-    try {
-        const pool = await connect();
-        const result = await pool.request()
-            .input('userId', sql.Int, req.session.user.id)
-            .query(`
-                SELECT * FROM gdms
-                WHERE data_retorno IS NULL AND created_by = @userId
-            `);
-        res.json(result.recordset); // Retorna a lista de GDMs sem data de retorno
-    } catch (err) {
-        console.error('Erro ao listar GDMs pendentes:', err);
-        res.status(500).send('Erro no servidor');
-    }
-});
-
-// Rota para atualizar o status de um GDM (adiciona a data de retorno, validando com a data de desembarque)
 // Rota para atualizar o status da GDM
 app.post('/api/atualizar-status', async (req, res) => {
     const { gdmNumero, motivo, dataRetorno } = req.body;
@@ -688,23 +670,24 @@ app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
 
 app.use('/api/gdms-pendentes', isAuthenticated);
 
-app.get('/api/gdms-pendentes', async (req, res) => {
+// Rota para listar GDMs pendentes de atualização de status (sem data de retorno)
+app.get('/api/gdms-pendentes', isAuthenticated, async (req, res) => {
     try {
-        const unitId = req.session.user.unit_id; // Obtém o unit_id do usuário logado
+        const pool = await connect();
+        
+        const unitId = req.session.user.unit_id; // Obtém o unit_id da sessão do usuário
+        console.log("Unit ID do usuário logado:", unitId); // Log para verificar o unit_id
 
-        // Consulta GDMs pendentes relacionadas à unidade do usuário logado
+        // Consulta para buscar GDMs pendentes da unidade do usuário logado
         const result = await pool.request()
-            .input('unit_id', unitId)
+            .input('unit_id', sql.Int, unitId)
             .query(`
-                SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
-                FROM gdms g
-                JOIN users u ON g.unit_id = u.unit_id
-                WHERE g.data_retorno IS NULL
-                AND g.unit_id = @unit_id
+                SELECT * FROM gdms
+                WHERE data_retorno IS NULL AND unit_id = @unit_id
             `);
-
-        console.log(result.recordset); // Log para confirmar o retorno
-        res.json(result.recordset);
+        
+        console.log("GDMs pendentes encontradas:", result.recordset); // Log para confirmar o retorno
+        res.json(result.recordset); // Retorna a lista de GDMs sem data de retorno
     } catch (error) {
         console.error('Erro ao buscar GDMs pendentes:', error);
         res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
