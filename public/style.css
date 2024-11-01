@@ -408,3 +408,36 @@ button[type="submit"]:hover {
     font-size: 0.9em;
     margin-top: 15px;
 }
+
+/* Estilos padrão para desktops */
+body {
+    font-size: 16px;
+}
+
+/* Estilos para telas menores, como tablets */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+    .menu {
+        display: block;
+        width: 100%;
+    }
+}
+
+/* Estilos para smartphones */
+@media (max-width: 480px) {
+    body {
+        font-size: 12px;
+    }
+    .menu {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+img, video {
+    max-width: 100%;
+    height: auto;
+}
+
