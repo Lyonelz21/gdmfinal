@@ -674,20 +674,16 @@ app.use('/api/gdms-pendentes', isAuthenticated);
 app.get('/api/gdms-pendentes', isAuthenticated, async (req, res) => {
     try {
         const pool = await connect();
-        
-        const userId = req.session.user.id; // Obtém o userId da sessão do usuário
-        console.log("User ID do usuário logado:", userId); // Log para verificar o userId
-
-        // Consulta para buscar GDMs pendentes criadas pelo usuário logado
         const result = await pool.request()
-            .input('userId', sql.Int, userId)
+            .input('userId', sql.Int, req.session.user.id) // Filtra com base no id do usuário logado
             .query(`
-                SELECT * FROM gdms
-                WHERE data_retorno IS NULL AND created_by = @userId
+                SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
+                FROM gdms g
+                JOIN users u ON g.unit_id = u.unit_id
+                WHERE g.data_retorno IS NULL AND g.created_by = @userId
             `);
-        
-        console.log("GDMs pendentes encontradas:", result.recordset); // Log para confirmar o retorno
-        res.json(result.recordset); // Retorna a lista de GDMs sem data de retorno
+
+        res.json(result.recordset); // Retorna apenas GDMs do usuário
     } catch (error) {
         console.error('Erro ao buscar GDMs pendentes:', error);
         res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
