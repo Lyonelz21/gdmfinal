@@ -44,14 +44,18 @@
             const response = await fetch(`/api/detalhe-gdm/${gdmId}`);
             if (response.ok) {
                 const gdm = await response.json();
+
+                // Atualiza os elementos com os dados recebidos
                 document.getElementById('numeroGDM').innerText = gdm.numero_gdm;
-                document.getElementById('unidade').innerText = gdm.unit_name;  // Aqui buscamos o nome da embarcação associado
+                document.getElementById('unidade').innerText = gdm.unidade || 'N/A'; // Garante que "N/A" será exibido se a unidade estiver ausente
                 document.getElementById('motivoDesembarque').innerText = gdm.motivo_desembarque;
                 document.getElementById('destino').innerText = gdm.destino;
                 document.getElementById('observacao').innerText = gdm.observacao;
                 document.getElementById('dataEnvio').innerText = new Date(gdm.data_envio).toLocaleDateString();
                 document.getElementById('dataRetorno').innerText = gdm.data_retorno ? new Date(gdm.data_retorno).toLocaleDateString() : 'Não retornado';
-                
+                document.getElementById('statusMotivo').innerText = gdm.status_motivo || 'N/A';
+
+                // Exibe o PDF se houver um arquivo associado
                 if (gdm.gdm_file) {
                     const fileViewer = document.getElementById('fileViewer');
                     fileViewer.src = `/uploads/${gdm.gdm_file}`;
@@ -94,7 +98,7 @@
                 <span class="detail-data" id="numeroGDM"></span>
             </div>
             <div class="detail-box">
-                <span class="detail-title">Unidade</span>
+                <span class="detail-title">Embarcação</span>
                 <span class="detail-data" id="unidade"></span>
             </div>
             <div class="detail-box">
@@ -112,6 +116,10 @@
             <div class="detail-box">
                 <span class="detail-title">Data de Retorno</span>
                 <span class="detail-data" id="dataRetorno"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Status</span>
+                <span class="detail-data" id="statusMotivo"></span>
             </div>
         </div>
         <div id="observacaoBox">
