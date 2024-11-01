@@ -474,11 +474,34 @@ img, video {
 #observacaoBox {
     width: 100%;
     text-align: center;
-    padding: 15px;
+    margin-top: 20px;
     border-radius: 8px;
-    margin-top: 10px;
-    border: 2px solid #ccc;
-    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    background-color: ##002b4c;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+#observacaoBox .detail-title {
+    font-weight: bold;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #002b4c; /* Azul mais escuro */
+    padding: 5px 15px;
+    position: absolute;
+    top: 0px; /* Levanta o título para se sobrepor à borda */
+    left: 10px; /* Ajusta para alinhar com o conteúdo */
+    z-index: 1;
+    border-radius: 5px;
+}
+
+#observacaoBox .detail-data {
+    font-size: 16px;
+    color: #333;
+    background-color: #e9ecef;
+    padding: 15px;
+    margin-top: 20px; /* Espaço para o título */
 }
 
 #fileViewer {
