@@ -45,14 +45,13 @@
             if (response.ok) {
                 const gdm = await response.json();
                 document.getElementById('numeroGDM').innerText = gdm.numero_gdm;
-                document.getElementById('unidade').innerText = gdm.unidade;
+                document.getElementById('unidade').innerText = gdm.unit_name;  // Aqui buscamos o nome da embarcação associado
                 document.getElementById('motivoDesembarque').innerText = gdm.motivo_desembarque;
                 document.getElementById('destino').innerText = gdm.destino;
                 document.getElementById('observacao').innerText = gdm.observacao;
                 document.getElementById('dataEnvio').innerText = new Date(gdm.data_envio).toLocaleDateString();
                 document.getElementById('dataRetorno').innerText = gdm.data_retorno ? new Date(gdm.data_retorno).toLocaleDateString() : 'Não retornado';
-                document.getElementById('statusMotivo').innerText = gdm.status_motivo;
-
+                
                 if (gdm.gdm_file) {
                     const fileViewer = document.getElementById('fileViewer');
                     fileViewer.src = `/uploads/${gdm.gdm_file}`;
@@ -89,16 +88,38 @@
 
     <div class="main-content">
         <h1>Detalhes da GDM</h1>
-        <p><strong>Numeração GDM:</strong> <span id="numeroGDM"></span></p>
-        <p><strong>Unidade:</strong> <span id="unidade"></span></p>
-        <p><strong>Motivo do Desembarque:</strong> <span id="motivoDesembarque"></span></p>
-        <p><strong>Destino:</strong> <span id="destino"></span></p>
-        <p><strong>Observação:</strong> <span id="observacao"></span></p>
-        <p><strong>Data de Envio:</strong> <span id="dataEnvio"></span></p>
-        <p><strong>Data de Retorno:</strong> <span id="dataRetorno"></span></p>
-        <p><strong>Status Motivo:</strong> <span id="statusMotivo"></span></p>
+        <div class="detail-box-container">
+            <div class="detail-box">
+                <span class="detail-title">Numeração</span>
+                <span class="detail-data" id="numeroGDM"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Unidade</span>
+                <span class="detail-data" id="unidade"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Motivo do Desembarque</span>
+                <span class="detail-data" id="motivoDesembarque"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Destino</span>
+                <span class="detail-data" id="destino"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Data de Envio</span>
+                <span class="detail-data" id="dataEnvio"></span>
+            </div>
+            <div class="detail-box">
+                <span class="detail-title">Data de Retorno</span>
+                <span class="detail-data" id="dataRetorno"></span>
+            </div>
+        </div>
+        <div id="observacaoBox">
+            <span class="detail-title">Observação</span>
+            <p class="detail-data" id="observacao"></p>
+        </div>
 
-        <iframe id="fileViewer" width="100%" height="600px" style="display: none;"></iframe>
+        <iframe id="fileViewer"></iframe>
     </div>
 </body>
 </html>
