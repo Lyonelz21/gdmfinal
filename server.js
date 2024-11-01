@@ -685,4 +685,30 @@ app.get('/api/detalhe-gdm/:id', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar detalhes da GDM' });
     }
 });
+
+app.use('/api/gdms-pendentes', isAuthenticated);
+
+app.get('/api/gdms-pendentes', async (req, res) => {
+    try {
+        const unitId = req.session.user.unit_id; // Obtém o unit_id do usuário logado
+
+        // Consulta GDMs pendentes relacionadas à unidade do usuário logado
+        const result = await pool.request()
+            .input('unit_id', unitId)
+            .query(`
+                SELECT g.numero_gdm, u.username AS embarcacao, g.data_envio
+                FROM gdms g
+                JOIN users u ON g.unit_id = u.unit_id
+                WHERE g.data_retorno IS NULL
+                AND g.unit_id = @unit_id
+            `);
+
+        console.log(result.recordset); // Log para confirmar o retorno
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Erro ao buscar GDMs pendentes:', error);
+        res.status(500).json({ error: 'Erro ao buscar GDMs pendentes' });
+    }
+});
+
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
