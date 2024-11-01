@@ -675,15 +675,15 @@ app.get('/api/gdms-pendentes', isAuthenticated, async (req, res) => {
     try {
         const pool = await connect();
         
-        const unitId = req.session.user.unit_id; // Obtém o unit_id da sessão do usuário
-        console.log("Unit ID do usuário logado:", unitId); // Log para verificar o unit_id
+        const userId = req.session.user.id; // Obtém o userId da sessão do usuário
+        console.log("User ID do usuário logado:", userId); // Log para verificar o userId
 
-        // Consulta para buscar GDMs pendentes da unidade do usuário logado
+        // Consulta para buscar GDMs pendentes criadas pelo usuário logado
         const result = await pool.request()
-            .input('unit_id', sql.Int, unitId)
+            .input('userId', sql.Int, userId)
             .query(`
                 SELECT * FROM gdms
-                WHERE data_retorno IS NULL AND unit_id = @unit_id
+                WHERE data_retorno IS NULL AND created_by = @userId
             `);
         
         console.log("GDMs pendentes encontradas:", result.recordset); // Log para confirmar o retorno
